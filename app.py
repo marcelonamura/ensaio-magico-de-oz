@@ -5,8 +5,7 @@ st.set_page_config(
     page_title="Ensaio do Mágico de Oz - Espantalho", page_icon="🌾", layout="centered"
 )
 
-# Base de dados com as falas do Espantalho extraídas do roteiro
-# (Você pode adicionar quantas cenas quiser aqui!)
+# Base de dados expandida com todas as principais cenas e falas do Espantalho
 cenas_espantalho = [
     {
         "id": 1,
@@ -44,19 +43,190 @@ cenas_espantalho = [
         "id": 4,
         "cena": "Cena 4 - O Encontro com o Espantalho",
         "personagem_deixa": "Dorothy",
-        "deixa": "Onde fica esse tal de Kansas?",
-        "fala_espantalho": (
+        "deixa": (
             "É lá que eu moro, e estou indo para a cidade das esmeraldas pedir"
             " ajuda para o mágico de Oz para poder voltar para casa."
-        ),  # Nota: Ajustável conforme o fluxo da cena
+        ),
+        "fala_espantalho": "Cê vai falar com o mágico?",
+    },
+    {
+        "id": 5,
+        "cena": "Cena 4 - O Encontro com o Espantalho",
+        "personagem_deixa": "Dorothy",
+        "deixa": "Aham",
+        "fala_espantalho": (
+            "E você acha que se eu for com ocê esse tal de mágico arruma um"
+            " cérebro pra mim?"
+        ),
+    },
+    {
+        "id": 6,
+        "cena": "Cena 4 - O Encontro com o Espantalho",
+        "personagem_deixa": "Dorothy",
+        "deixa": (
+            "Eu acho que sim! O problema é que tem uma bruxa que tá uma fera"
+            " comigo e pode acabar sobrando pra você."
+        ),
+        "fala_espantalho": (
+            "Uma bruxa que tá uma fera com você? Eu não tenho medo de bruxa nem"
+            " de fera, a única coisa que tenho medo mesmo é fósforo aceso!"
+        ),
+    },
+    {
+        "id": 7,
+        "cena": "Cena 4 - O Encontro com o Espantalho",
+        "personagem_deixa": "Dorothy",
+        "deixa": "Mas e ai menina, você acha que pode me levar com ocê?",
+        "fala_espantalho": "Mas é claro que eu posso!",
+    },
+    {
+        "id": 8,
+        "cena": "Cena 5 - O Homem de Lata e as Maçãs",
+        "personagem_deixa": "Dorothy",
+        "deixa": "Todos os seres vivos precisam comer.",
+        "fala_espantalho": "Eu não preciso comer. Isso significa que não estou vivo?",
+    },
+    {
+        "id": 9,
+        "cena": "Cena 5 - O Homem de Lata e as Maçãs",
+        "personagem_deixa": "Dorothy",
+        "deixa": "Ah, não, Espantalho. Você é o amigo mais animado que já tive.",
+        "fala_espantalho": "Ah obrigado!",
+    },
+    {
+        "id": 10,
+        "cena": "Cena 5 - O Homem de Lata e as Maçãs",
+        "personagem_deixa": "Dorothy",
+        "deixa": "Nas árvores.",
+        "fala_espantalho": (
+            "Você quer dizer, todos aqueles passarinhos vermelhos pendurados de"
+            " cabeça para baixo por uma perna?"
+        ),
+    },
+    {
+        "id": 11,
+        "cena": "Cena 5 - O Homem de Lata e as Maçãs",
+        "personagem_deixa": "Primeira Árvore / Dorothy",
+        "deixa": (
+            "Desculpe! Sempre esqueço que não estou no Kansas. (Árvores"
+            " reclamam de vermes)"
+        ),
+        "fala_espantalho": (
+            "Vou te mostrar como conseguir maçãs. Claro que você tem minhocas."
+            " Minhocas, lagartas e provavelmente um monte de piolhos também."
+        ),
+    },
+    {
+        "id": 12,
+        "cena": "Cena 5 - O Homem de Lata (Encontro)",
+        "personagem_deixa": "Homem de Lata",
+        "deixa": "Claro. Veja Dorothy, se eu tivesse um cérebro...",
+        "fala_espantalho": "Eu não quero ouvir isso!",
+    },
+    {
+        "id": 13,
+        "cena": "Cena 6 - O Leão Covarde",
+        "personagem_deixa": "Dorothy",
+        "deixa": "Você acha que encontraremos algum animal selvagem?",
+        "fala_espantalho": (
+            "Claro, não são muito inteligente, mas acho que vai escurecer antes"
+            " de clarear."
+        ),
+    },
+    {
+        "id": 14,
+        "cena": "Cena 6 - O Leão Covarde",
+        "personagem_deixa": "Homem de Lata",
+        "deixa": "Alguns mas principalmente leões, tigres e ursos.",
+        "fala_espantalho": "E tigres!",
+    },
+    {
+        "id": 15,
+        "cena": "Cena 6 - O Leão Covarde",
+        "personagem_deixa": "Homem de Lata",
+        "deixa": "Levante as mãos, seu saco de feno torto!",
+        "fala_espantalho": "Isso está ficando pessoal, Leão.",
+    },
+    {
+        "id": 16,
+        "cena": "Cena 6 - O Leão Covarde",
+        "personagem_deixa": "Homem de Lata",
+        "deixa": "Vai espantalho dá uma lição nele!",
+        "fala_espantalho": "Eu não, vai você.",
+    },
+    {
+        "id": 17,
+        "cena": "Cena 6 - O Leão Covarde",
+        "personagem_deixa": "Homem de Lata",
+        "deixa": "Para conseguir um coração para ele",
+        "fala_espantalho": "E para ele um cérebro",
+    },
+    {
+        "id": 18,
+        "cena": "Cena 7 - As Papoulas",
+        "personagem_deixa": "Dorothy",
+        "deixa": "Esta estrada de tijolos amarelos parece durar para sempre.",
+        "fala_espantalho": (
+            "Se você está cansada, Dorothy, podemos pegar um atalho."
+        ),
+    },
+    {
+        "id": 19,
+        "cena": "Cena 7 - As Papoulas",
+        "personagem_deixa": "Dorothy / Homem de Lata",
+        "deixa": "É a Bruxa Má! O qué faremos? Ajuda! Ajuda!",
+        "fala_espantalho": (
+            "Não adianta gritar numa hora dessas. Ninguém vai ouvir você!"
+            " Ajuda! Ajuda! Ajuda!"
+        ),
+    },
+    {
+        "id": 20,
+        "cena": "Cena 8 - Portões da Cidade das Esmeraldas",
+        "personagem_deixa": "Guarda 2",
+        "deixa": "O aviso! Esse na porta, nítido como o nariz na minha cara",
+        "fala_espantalho": "Ler o quê?",
+    },
+    {
+        "id": 21,
+        "cena": "Cena 11 - Floresta Assombrada",
+        "personagem_deixa": "Leão",
+        "deixa": "Alguém sabe onde algum de nós está?",
+        "fala_espantalho": "Passamos por um aviso há algum tempo.",
+    },
+    {
+        "id": 22,
+        "cena": "Cena 13 - O Resgate no Castelo",
+        "personagem_deixa": "Dorothy",
+        "deixa": "Sim estou bem, mas a Bruxa me trancou!",
+        "fala_espantalho": "Depressa, não temos tempo a perder!",
+    },
+    {
+        "id": 23,
+        "cena": "Cena 14 - A Farsa do Mágico",
+        "personagem_deixa": "Homem de Lata",
+        "deixa": "E o coração que você prometeu para o Homem de Lata?",
+        "fala_espantalho": "E o cérebro do Espantalho?",
+    },
+    {
+        "id": 24,
+        "cena": "Cena 15 - Despedida",
+        "personagem_deixa": "Dorothy",
+        "deixa": (
+            "Querido Espantalho, você foi meu primeiro amigo aqui. Sentirei"
+            " muita saudade."
+        ),
+        "fala_espantalho": (
+            "Ter um cérebro não torna a separação mais fácil. Adeus Dorothy!"
+        ),
     },
 ]
 
 # Título do Aplicativo
 st.title("🌾 Ensaio Interativo: O Espantalho")
 st.markdown(
-    "Bem-vindo ao assistente de ensaio do Rafael! Selecione a fala abaixo,"
-    " ouça a deixa e pratique o seu texto."
+    "Ferramenta de ensaio completa para o Rafael. Escolha a cena, confira"
+    " a deixa e pratique o seu texto!"
 )
 
 # Sidebar para escolha da cena/fala
@@ -73,47 +243,31 @@ cena_atual = cenas_espantalho[escolha_indice]
 
 # Exibição principal da cena
 st.subheader(cena_atual["cena"])
-
 st.markdown("---")
 
-# Bloco da Deixa (Outro personagem / App)
+# Bloco da Deixa
 st.markdown(
     f"🗣️ **Deixa ({cena_atual['personagem_deixa']}):**"
     f" *\"{cena_atual['deixa']}\"*"
 )
 
-# Botão para simular a fala do app em voz alta (Text-to-Speech)
 if st.button("🔊 Ouvir Deixa"):
-    # Aqui podemos integrar a API de Text-to-Speech do Google futuramente
-    st.info(
-        "*(Simulando áudio da deixa)*: " + cena_atual["deixa"]
-    )
+    st.info(f'*(Simulando áudio da deixa)*: "{cena_atual["deixa"]}"')
 
 st.markdown("---")
 
 # Bloco da Resposta do Espantalho (Rafael)
-st.markdown("🌾 **Sua vez (Espantalho):**")
+st.markdown("🌾 **Sua fala (Espantalho):**")
 st.markdown(f"> *{cena_atual['fala_espantalho']}*")
 
-# Área de interação por voz ou texto para o Rafael testar
 modo_teste = st.radio(
-    "Como deseja ensaiar esta fala?",
-    ["Praticar Falando (Microfone)", "Digitar / Conferir Texto"],
+    "Como deseja ensaiar?",
+    ["Praticar com Texto", "Simular Gravação de Voz"],
 )
 
-if modo_teste == "Praticar Falando (Microfone)":
-    st.warning(
-        "🎙️ O componente de gravação de voz será ativado aqui para comparar"
-        " sua fala com o roteiro usando a IA do Gemini."
-    )
-    # Placeholder para o componente de áudio do Streamlit
-    audio_gravado = st.audio_input("Grave sua fala como Espantalho:")
-    if audio_gravado:
-        st.success(
-        "Áudio capturado! Analisando entonação e precisão da fala..."
-        )
-        # Aqui entraremos com a chamada para a API do Gemini processar o áudio
-
+if modo_teste == "Simular Gravação de Voz":
+    st.warning("🎙️ Ferramenta de microfone pronta para captura.")
+    st.audio_input("Grave sua fala como Espantalho:")
 else:
     fala_usuario = st.text_input("Digite sua fala para testar:")
     if st.button("Validar Fala"):
