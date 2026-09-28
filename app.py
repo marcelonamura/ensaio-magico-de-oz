@@ -1,10 +1,9 @@
-from elevenlabs import ElevenLabs
 from google import genai
 import streamlit as st
 
 # Configuração da Página
 st.set_page_config(
-    page_title="Ensaio Teatral - O Espantalho", page_icon="🌾", layout="centered"
+    page_title="Ensaio do Mágico de Oz - Espantalho", page_icon="🌾", layout="centered"
 )
 
 # Base de dados expandida com todas as principais cenas e falas do Espantalho
@@ -224,75 +223,19 @@ cenas_espantalho = [
     },
 ]
 
-# Inicializa clientes
+# Inicializa o cliente do Gemini
 try:
-    client_gemini = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception:
-    client_gemini = None
-
-try:
-    client_eleven = ElevenLabs(api_key=st.secrets["ELEVENLABS_API_KEY"])
-except Exception:
-    client_eleven = None
-
-
-import requests
-
-
-def gerar_audio_elevenlabs(texto, personagem):
-    """Gera áudio usando diretamente a API REST da ElevenLabs (contorna restrições
-
-    do SDK oficial no plano Free).
-    """
-    api_key = st.secrets.get("ELEVENLABS_API_KEY")
-    if not api_key:
-        return None
-
-    # IDs de vozes padrão universais gratuitas (Rachel e Adam)
-    voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel (Dorothy / Feminina)
-
-    personagem_lower = personagem.lower()
-    if (
-        "homem de lata" in personagem_lower
-        or "leão" in personagem_lower
-        or "guarda" in personagem_lower
-    ):
-        voice_id = "pNInz6obpgDQGcFmaJgB"  # Adam (Masculina)
-
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-
-    headers = {
-        "Accept": "audio/mpeg",
-        "Content-Type": "application/json",
-        "xi-api-key": api_key,
-    }
-
-    payload = {
-        "text": texto,
-        "model_id": "eleven_multilingual_v2",
-        "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
-    }
-
-    try:
-        response = requests.post(url, json=payload, headers=headers)
-        if response.status_code == 200:
-            return response.content
-        else:
-            st.error(f"Erro na API ElevenLabs: {response.text}")
-            return None
-    except Exception as e:
-        st.error(f"Erro de conexão com ElevenLabs: {e}")
-        return None
-
+    client = None
 
 if "indice_atual" not in st.session_state:
     st.session_state.indice_atual = 0
 
 # Título do Aplicativo
-st.title("🌾 Ensaio Teatral Pro: O Espantalho")
+st.title("🌾 Ensaio Teatral: O Espantalho")
 st.markdown(
-    "Ouça as deixas com vozes realistas (ElevenLabs Free), grave sua fala e"
-    " receba o feedback do Gemini!"
+    "Ouça a deixa em voz alta, grave a sua fala e deixe o Gemini avaliar!"
 )
 
 # Sidebar para escolha manual
@@ -325,20 +268,31 @@ st.markdown(
     f" *\"{cena_atual['deixa']}\"*"
 )
 
-if st.button("🔊 Ouvir Deixa em Voz Teatral Real"):
-    with st.spinner(
-        f"Gerando voz expressiva para {cena_atual['personagem_deixa']}..."
-    ):
-        audio_bytes = gerar_audio_elevenlabs(
-            cena_atual["deixa"], cena_atual["personagem_deixa"]
-        )
-        if audio_bytes:
-            st.audio(audio_bytes, format="audio/mp3", autoplay=True)
-        else:
-            st.warning(
-                "⚠️ Erro ao gerar o áudio. Verifique sua ELEVENLABS_API_KEY nos"
-                " Secrets."
-            )
+# Script JavaScript nativo para leitura de voz via navegador
+texto_escapado = (
+    cena_atual["deixa"]
+    .replace('"', '\\"')
+    .replace("'", "\\'")
+    .replace("\n", " ")
+)
+js_code = f"""
+<script>
+function falarDeixa() {{
+    if ('speechSynthesis' in window) {{
+        window.speechSynthesis.cancel();
+        let utterance = new SpeechSynthesisUtterance("{texto_escapado}");
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
+    }}
+}}
+falarDeixa();
+</script>
+"""
+
+if st.button("🔊 Ouvir Deixa em Voz Alta"):
+    st.components.v1.html(js_code, height=0)
+    st.info(f'Reproduzindo deixa de {cena_atual["personagem_deixa"]}...')
 
 st.markdown("---")
 
@@ -353,7 +307,7 @@ audio_gravado = st.audio_input(
 )
 
 if audio_gravado:
-    if client_gemini is None:
+    if client is None:
         st.error(
             "⚠️ Chave GEMINI_API_KEY não configurada nos Secrets do Streamlit."
         )
@@ -362,12 +316,12 @@ if audio_gravado:
             "🤖 O Gemini está a ouvir e a analisar a sua atuação..."
         ):
             try:
-                audio_bytes_user = audio_gravado.read()
+                audio_bytes = audio_gravado.read()
                 audio_file_path = "temp_audio.wav"
                 with open(audio_file_path, "wb") as f:
-                    f.write(audio_bytes_user)
+                    f.write(audio_bytes)
 
-                audio_ref = client_gemini.files.upload(file=audio_file_path)
+                audio_ref = client.files.upload(file=audio_file_path)
 
                 prompt = (
                     "Você é um diretor de teatro avaliador. A fala esperada do"
@@ -379,7 +333,7 @@ if audio_gravado:
                     " indicando se a fala foi correta ou se precisa de ajuste."
                 )
 
-                response = client_gemini.models.generate_content(
+                response = client.models.generate_content(
                     model="gemini-3.8-flash", contents=[audio_ref, prompt]
                 )
 
