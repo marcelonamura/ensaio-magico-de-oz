@@ -1,11 +1,11 @@
+from elevenlabs import ElevenLabs
 from google import genai
-from gtts import gTTS
 import io
 import streamlit as st
 
 # Configuração da Página
 st.set_page_config(
-    page_title="Ensaio do Mágico de Oz - Espantalho", page_icon="🌾", layout="centered"
+    page_title="Ensaio Teatral - O Espantalho", page_icon="🌾", layout="centered"
 )
 
 # Base de dados expandida com todas as principais cenas e falas do Espantalho
@@ -225,22 +225,48 @@ cenas_espantalho = [
     },
 ]
 
-# Inicializa o cliente do Gemini
+# Inicializa clientes de IA (Gemini e ElevenLabs)
 try:
-    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+    client_gemini = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception:
-    client = None
+    client_gemini = None
+
+try:
+    client_eleven = ElevenLabs(api_key=st.secrets["ELEVENLABS_API_KEY"])
+except Exception:
+    client_eleven = None
 
 
-def gerar_audio_gtts(texto):
-    """Gera o áudio da deixa usando gTTS (Google Text-to-Speech gratuito)"""
+def gerar_audio_elevenlabs(texto, personagem):
+    """Gera áudio realista e distinto usando a ElevenLabs API."""
+    if not client_eleven:
+        return None
+
+    # IDs de vozes predefinidas populares na ElevenLabs (você pode customizar no painel deles)
+    # Dorothy (Voz feminina jovem e expressiva - ex: Rachel ou Charlotte)
+    voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel (Padrão feminina)
+
+    personagem_lower = personagem.lower()
+    if "homem de lata" in personagem_lower:
+        voice_id = "AZnzlk1XvdvUeBnXmlld"  # Dom (Voz mais firme/metálica)
+    elif "leão" in personagem_lower:
+        voice_id = "ErXwobaYiN019PkySvjV"  # Antoni (Voz mais grave e teatral)
+    elif "guarda" in personagem_lower:
+        voice_id = "TxGEqnHWrfWFTfGW9XjX"  # Josh
+
     try:
-        tts = gTTS(text=texto, lang="pt", slow=False)
-        fp = io.BytesIO()
-        tts.write_to_fp(fp)
-        fp.seek(0)
-        return fp.read()
-    except Exception:
+        audio_generator = client_eleven.text_to_speech.convert(
+            voice_id=voice_id,
+            output_format="mp3_44100_128",
+            text=texto,
+            model_id="eleven_multilingual_v2",  # Excelente suporte a português expressivo
+        )
+
+        # Junta os pedaços do stream de áudio em bytes
+        audio_bytes = b"".join(chunk for chunk in audio_generator)
+        return audio_bytes
+    except Exception as e:
+        st.error(f"Erro na ElevenLabs: {e}")
         return None
 
 
@@ -248,10 +274,10 @@ if "indice_atual" not in st.session_state:
     st.session_state.indice_atual = 0
 
 # Título do Aplicativo
-st.title("🌾 Ensaio Teatral: O Espantalho")
+st.title("🌾 Ensaio Teatral Pro: O Espantalho")
 st.markdown(
-    "Ouça as deixas em voz alta, grave sua fala e receba a avaliação do"
-    " Gemini!"
+    "Ouça as deixas com vozes teatrais realistas da ElevenLabs, grave sua"
+    " fala e receba o feedback do Gemini!"
 )
 
 # Sidebar para escolha manual
@@ -284,14 +310,21 @@ st.markdown(
     f" *\"{cena_atual['deixa']}\"*"
 )
 
-# Botão para reproduzir a deixa gerada por gTTS
-if st.button("🔊 Ouvir Deixa em Voz Alta"):
-    with st.spinner("Gerando áudio da deixa..."):
-        audio_bytes = gerar_audio_gtts(cena_atual["deixa"])
+# Botão para reproduzir o áudio real e distinto da ElevenLabs
+if st.button("🔊 Ouvir Deixa em Voz Teatral Real"):
+    with st.spinner(
+        f"Gerando voz expressiva para {cena_atual['personagem_deixa']}..."
+    ):
+        audio_bytes = gerar_audio_elevenlabs(
+            cena_atual["deixa"], cena_atual["personagem_deixa"]
+        )
         if audio_bytes:
-            st.audio(audio_bytes, format="audio/mp3")
+            st.audio(audio_bytes, format="audio/mp3", autoplay=True)
         else:
-            st.warning("Não foi possível gerar o áudio.")
+            st.warning(
+                "⚠️ Verifique se a chave 'ELEVENLABS_API_KEY' foi adicionada"
+                " corretamente nos Secrets do Streamlit."
+            )
 
 st.markdown("---")
 
@@ -306,7 +339,7 @@ audio_gravado = st.audio_input(
 )
 
 if audio_gravado:
-    if client is None:
+    if client_gemini is None:
         st.error(
             "⚠️ Chave GEMINI_API_KEY não configurada nos Secrets do Streamlit."
         )
@@ -320,7 +353,7 @@ if audio_gravado:
                 with open(audio_file_path, "wb") as f:
                     f.write(audio_bytes_user)
 
-                audio_ref = client.files.upload(file=audio_file_path)
+                audio_ref = client_gemini.files.upload(file=audio_file_path)
 
                 prompt = (
                     "Você é um diretor de teatro avaliador. A fala esperada do"
@@ -332,7 +365,7 @@ if audio_gravado:
                     " indicando se a fala foi correta ou se precisa de ajuste."
                 )
 
-                response = client.models.generate_content(
+                response = client_gemini.models.generate_content(
                     model="gemini-3.8-flash", contents=[audio_ref, prompt]
                 )
 
