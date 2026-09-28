@@ -222,17 +222,18 @@ cenas_espantalho = [
     },
 ]
 
-# Inicializa o controle de índice da fala no estado da sessão do Streamlit
+# Inicializa o controle de índice da fala no estado da sessão
 if "indice_atual" not in st.session_state:
     st.session_state.indice_atual = 0
 
 # Título do Aplicativo
 st.title("🌾 Ensaio por Voz: O Espantalho")
 st.markdown(
-    "Ouça a deixa da cena, grave a sua fala e avance para a próxima linha!"
+    "Ouça a deixa da cena, veja o texto de referência, grave a sua fala e"
+    " avance!"
 )
 
-# Sidebar para escolha manual ou acompanhamento do progresso
+# Sidebar para escolha manual
 st.sidebar.header("Navegação de Cenas")
 escolha_indice = st.sidebar.selectbox(
     "Ir diretamente para a fala:",
@@ -243,7 +244,6 @@ escolha_indice = st.sidebar.selectbox(
     ),
 )
 
-# Sincroniza a seleção da sidebar com o estado atual
 if escolha_indice != st.session_state.indice_atual:
     st.session_state.indice_atual = escolha_indice
     st.rerun()
@@ -268,14 +268,14 @@ if st.button("🔊 Ouvir Deixa"):
 
 st.markdown("---")
 
-# Bloco de Treino por Voz
-st.markdown("🎙️ **Sua vez (Grave sua fala como Espantalho):**")
+# Bloco de Treino por Voz com Texto Aberto (Sem Expander)
+st.markdown("🌾 **Sua fala (Espantalho):**")
+st.info(f"_{cena_atual['fala_espantalho']}_")
 
-with st.expander("👀 Ver texto da fala de referência"):
-    st.markdown(f"> *{cena_atual['fala_espantalho']}*")
-
+# Usar uma chave única (baseada no ID da cena) faz com que o gravador reinicie limpo a cada troca
 audio_gravado = st.audio_input(
-    "Clique no botão de gravação para testar sua fala:"
+    "Grave sua fala como Espantalho:",
+    key=f"gravador_cena_{cena_atual['id']}",
 )
 
 if audio_gravado:
@@ -283,11 +283,9 @@ if audio_gravado:
     st.balloons()
 
     # Botão para avançar para a próxima fala
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        if st.session_state.indice_atual < len(cenas_espantalho) - 1:
-            if st.button("Próxima Fala ➡️", type="primary"):
-                st.session_state.indice_atual += 1
-                st.rerun()
-        else:
-            st.success("🎉 Parabéns! Você concluiu todas as falas do Espantalho!")
+    if st.session_state.indice_atual < len(cenas_espantalho) - 1:
+        if st.button("Próxima Fala ➡️", type="primary"):
+            st.session_state.indice_atual += 1
+            st.rerun()
+    else:
+        st.success("🎉 Parabéns! Você concluiu todas as falas do Espantalho!")
