@@ -236,14 +236,20 @@ except Exception:
     client_eleven = None
 
 
+import requests
+
+
 def gerar_audio_elevenlabs(texto, personagem):
-    """Gera áudio usando vozes padrão oficiais gratuitas da ElevenLabs."""
-    if not client_eleven:
+    """Gera áudio usando diretamente a API REST da ElevenLabs (contorna restrições
+
+    do SDK oficial no plano Free).
+    """
+    api_key = st.secrets.get("ELEVENLABS_API_KEY")
+    if not api_key:
         return None
 
-    # IDs de vozes padrão universais gratuitas da ElevenLabs
-    # Rachel (Feminina - Dorothy) | Adam (Masculina - Homem de Lata/Leão)
-    voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel
+    # IDs de vozes padrão universais gratuitas (Rachel e Adam)
+    voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel (Dorothy / Feminina)
 
     personagem_lower = personagem.lower()
     if (
@@ -251,18 +257,31 @@ def gerar_audio_elevenlabs(texto, personagem):
         or "leão" in personagem_lower
         or "guarda" in personagem_lower
     ):
-        voice_id = "pNInz6obpgDQGcFmaJgB"  # Adam
+        voice_id = "pNInz6obpgDQGcFmaJgB"  # Adam (Masculina)
+
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": api_key,
+    }
+
+    payload = {
+        "text": texto,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
+    }
 
     try:
-        audio_generator = client_eleven.text_to_speech.convert(
-            voice_id=voice_id,
-            output_format="mp3_44100_128",
-            text=texto,
-            model_id="eleven_multilingual_v2",
-        )
-        return b"".join(chunk for chunk in audio_generator)
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code == 200:
+            return response.content
+        else:
+            st.error(f"Erro na API ElevenLabs: {response.text}")
+            return None
     except Exception as e:
-        st.error(f"Erro na ElevenLabs: {e}")
+        st.error(f"Erro de conexão com ElevenLabs: {e}")
         return None
 
 
