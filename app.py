@@ -238,31 +238,30 @@ except Exception:
 
 
 def gerar_audio_elevenlabs(texto, personagem):
-    """Gera áudio realista e distinto usando a ElevenLabs API."""
+    """Gera áudio realista usando vozes padrão gratuitas da ElevenLabs API."""
     if not client_eleven:
         return None
 
-    # IDs de vozes predefinidas populares na ElevenLabs (você pode customizar no painel deles)
-    # Dorothy (Voz feminina jovem e expressiva - ex: Rachel ou Charlotte)
-    voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel (Padrão feminina)
+    # IDs de vozes padrão gratuitas oficiais da ElevenLabs (liberadas para plano Free)
+    # Rachel (Voz feminina suave) | Adam (Voz masculina firme/neutra)
+    voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel (Dorothy / Feminino)
 
     personagem_lower = personagem.lower()
-    if "homem de lata" in personagem_lower:
-        voice_id = "AZnzlk1XvdvUeBnXmlld"  # Dom (Voz mais firme/metálica)
-    elif "leão" in personagem_lower:
-        voice_id = "ErXwobaYiN019PkySvjV"  # Antoni (Voz mais grave e teatral)
-    elif "guarda" in personagem_lower:
-        voice_id = "TxGEqnHWrfWFTfGW9XjX"  # Josh
+    if (
+        "homem de lata" in personagem_lower
+        or "leão" in personagem_lower
+        or "guarda" in personagem_lower
+    ):
+        voice_id = "pNInz6obpgDQGcFmaJgB"  # Adam (Masculino / Graves)
 
     try:
         audio_generator = client_eleven.text_to_speech.convert(
             voice_id=voice_id,
             output_format="mp3_44100_128",
             text=texto,
-            model_id="eleven_multilingual_v2",  # Excelente suporte a português expressivo
+            model_id="eleven_multilingual_v2",
         )
 
-        # Junta os pedaços do stream de áudio em bytes
         audio_bytes = b"".join(chunk for chunk in audio_generator)
         return audio_bytes
     except Exception as e:
