@@ -223,8 +223,7 @@ cenas_espantalho = [
     },
 ]
 
-# Inicializa o cliente do Gemini usando os Secrets do Streamlit
-# (Você configurará a chave GEMINI_API_KEY nas configurações do app no Streamlit Cloud)
+# Inicializa o cliente do Gemini
 try:
     client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception:
@@ -236,7 +235,7 @@ if "indice_atual" not in st.session_state:
 # Título do Aplicativo
 st.title("🌾 Ensaio por Voz com Gemini: O Espantalho")
 st.markdown(
-    "Ouça a deixa, grave sua fala e deixe o Gemini avaliar sua interpretação!"
+    "Ouça a deixa em voz alta, grave a sua fala e deixe o Gemini avaliar!"
 )
 
 # Sidebar para escolha manual
@@ -269,8 +268,27 @@ st.markdown(
     f" *\"{cena_atual['deixa']}\"*"
 )
 
-if st.button("🔊 Ouvir Deixa"):
-    st.info(f'*(Simulando áudio da deixa)*: "{cena_atual["deixa"]}"')
+# Botão de Text-to-Speech nativo do navegador
+texto_para_falar = cena_atual["deixa"].replace('"', '\\"')
+js_code = f"""
+<script>
+function falarDeixa() {{
+    if ('speechSynthesis' in window) {{
+        let utterance = new SpeechSynthesisUtterance("{texto_para_falar}");
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
+    }} else {{
+        alert('O seu navegador não suporta leitura de voz.');
+    }}
+}}
+falarDeixa();
+</script>
+"""
+
+if st.button("🔊 Ouvir Deixa em Voz Alta"):
+    st.components.v1.html(js_code, height=0)
+    st.info(f'Reproduzindo deixa de {cena_atual["personagem_deixa"]}...')
 
 st.markdown("---")
 
@@ -294,25 +312,21 @@ if audio_gravado:
             "🤖 O Gemini está a ouvir e a analisar a sua atuação..."
         ):
             try:
-                # Salva o áudio temporariamente para enviar ao Gemini
                 audio_bytes = audio_gravado.read()
                 audio_file_path = "temp_audio.wav"
                 with open(audio_file_path, "wb") as f:
                     f.write(audio_bytes)
 
-                # Faz upload do áudio para a API do Gemini
                 audio_ref = client.files.upload(file=audio_file_path)
 
-                # Prompt avaliador
                 prompt = (
                     "Você é um diretor de teatro avaliador. A fala esperada do"
                     f" ator (que interpreta o Espantalho) é: '{cena_atual['fala_espantalho']}'."
                     " Ouça atentamente o áudio enviado, transcreva o que o ator"
                     " disse e avalie se ele acertou a fala de forma correta"
                     " (permitindo pequenas variações naturais de dicção)."
-                    " Responda em Português de Portugal/Brasil de forma curta e"
-                    " encorajadora, indicando se a fala foi correta ou se"
-                    " precisa de ajuste."
+                    " Responda em Português de forma curta e encorajadora,"
+                    " indicando se a fala foi correta ou se precisa de ajuste."
                 )
 
                 response = client.models.generate_content(
