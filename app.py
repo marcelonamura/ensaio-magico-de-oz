@@ -316,7 +316,7 @@ if audio_gravado:
                 )
 
                 response = client.models.generate_content(
-                    contents=[audio_ref, prompt]
+                    model='gemini-2.5-flash', contents=[audio_ref, prompt]
                 )
 
                 st.success("✨ Análise do Diretor (Gemini):")
