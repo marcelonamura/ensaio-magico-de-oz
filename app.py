@@ -1,6 +1,5 @@
 from elevenlabs import ElevenLabs
 from google import genai
-import io
 import streamlit as st
 
 # Configuração da Página
@@ -225,7 +224,7 @@ cenas_espantalho = [
     },
 ]
 
-# Inicializa clientes de IA (Gemini e ElevenLabs)
+# Inicializa clientes
 try:
     client_gemini = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception:
@@ -238,13 +237,13 @@ except Exception:
 
 
 def gerar_audio_elevenlabs(texto, personagem):
-    """Gera áudio realista usando vozes padrão gratuitas da ElevenLabs API."""
+    """Gera áudio usando vozes padrão oficiais gratuitas da ElevenLabs."""
     if not client_eleven:
         return None
 
-    # IDs de vozes padrão gratuitas oficiais da ElevenLabs (liberadas para plano Free)
-    # Rachel (Voz feminina suave) | Adam (Voz masculina firme/neutra)
-    voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel (Dorothy / Feminino)
+    # IDs de vozes padrão universais gratuitas da ElevenLabs
+    # Rachel (Feminina - Dorothy) | Adam (Masculina - Homem de Lata/Leão)
+    voice_id = "21m00Tcm4TlvDq8ikWAM"  # Rachel
 
     personagem_lower = personagem.lower()
     if (
@@ -252,7 +251,7 @@ def gerar_audio_elevenlabs(texto, personagem):
         or "leão" in personagem_lower
         or "guarda" in personagem_lower
     ):
-        voice_id = "pNInz6obpgDQGcFmaJgB"  # Adam (Masculino / Graves)
+        voice_id = "pNInz6obpgDQGcFmaJgB"  # Adam
 
     try:
         audio_generator = client_eleven.text_to_speech.convert(
@@ -261,9 +260,7 @@ def gerar_audio_elevenlabs(texto, personagem):
             text=texto,
             model_id="eleven_multilingual_v2",
         )
-
-        audio_bytes = b"".join(chunk for chunk in audio_generator)
-        return audio_bytes
+        return b"".join(chunk for chunk in audio_generator)
     except Exception as e:
         st.error(f"Erro na ElevenLabs: {e}")
         return None
@@ -275,8 +272,8 @@ if "indice_atual" not in st.session_state:
 # Título do Aplicativo
 st.title("🌾 Ensaio Teatral Pro: O Espantalho")
 st.markdown(
-    "Ouça as deixas com vozes teatrais realistas da ElevenLabs, grave sua"
-    " fala e receba o feedback do Gemini!"
+    "Ouça as deixas com vozes realistas (ElevenLabs Free), grave sua fala e"
+    " receba o feedback do Gemini!"
 )
 
 # Sidebar para escolha manual
@@ -309,7 +306,6 @@ st.markdown(
     f" *\"{cena_atual['deixa']}\"*"
 )
 
-# Botão para reproduzir o áudio real e distinto da ElevenLabs
 if st.button("🔊 Ouvir Deixa em Voz Teatral Real"):
     with st.spinner(
         f"Gerando voz expressiva para {cena_atual['personagem_deixa']}..."
@@ -321,8 +317,8 @@ if st.button("🔊 Ouvir Deixa em Voz Teatral Real"):
             st.audio(audio_bytes, format="audio/mp3", autoplay=True)
         else:
             st.warning(
-                "⚠️ Verifique se a chave 'ELEVENLABS_API_KEY' foi adicionada"
-                " corretamente nos Secrets do Streamlit."
+                "⚠️ Erro ao gerar o áudio. Verifique sua ELEVENLABS_API_KEY nos"
+                " Secrets."
             )
 
 st.markdown("---")
