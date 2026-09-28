@@ -174,7 +174,7 @@ cenas_espantalho = [
         "id": 19,
         "cena": "Cena 7 - As Papoulas",
         "personagem_deixa": "Dorothy / Homem de Lata",
-        "deixa": "É a Bruxa Má! O qué faremos? Ajuda! Ajuda!",
+        "deixa": "É a Bruxa Má! O quê faremos? Ajuda! Ajuda!",
         "fala_espantalho": (
             "Não adianta gritar numa hora dessas. Ninguém vai ouvir você!"
             " Ajuda! Ajuda! Ajuda!"
@@ -222,27 +222,39 @@ cenas_espantalho = [
     },
 ]
 
+# Inicializa o controle de índice da fala no estado da sessão do Streamlit
+if "indice_atual" not in st.session_state:
+    st.session_state.indice_atual = 0
+
 # Título do Aplicativo
-st.title("🌾 Ensaio Interativo: O Espantalho")
+st.title("🌾 Ensaio por Voz: O Espantalho")
 st.markdown(
-    "Ferramenta de ensaio completa para o Rafael. Escolha a cena, confira"
-    " a deixa e pratique o seu texto!"
+    "Ouça a deixa da cena, grave a sua fala e avance para a próxima linha!"
 )
 
-# Sidebar para escolha da cena/fala
+# Sidebar para escolha manual ou acompanhamento do progresso
 st.sidebar.header("Navegação de Cenas")
 escolha_indice = st.sidebar.selectbox(
-    "Escolha a fala:",
+    "Ir diretamente para a fala:",
     options=range(len(cenas_espantalho)),
+    index=st.session_state.indice_atual,
     format_func=lambda x: (
         f"{cenas_espantalho[x]['cena']} (Fala {x+1})"
     ),
 )
 
-cena_atual = cenas_espantalho[escolha_indice]
+# Sincroniza a seleção da sidebar com o estado atual
+if escolha_indice != st.session_state.indice_atual:
+    st.session_state.indice_atual = escolha_indice
+    st.rerun()
+
+cena_atual = cenas_espantalho[st.session_state.indice_atual]
 
 # Exibição principal da cena
-st.subheader(cena_atual["cena"])
+st.subheader(
+    f"{cena_atual['cena']} (Fala {st.session_state.indice_atual + 1} de"
+    f" {len(cenas_espantalho)})"
+)
 st.markdown("---")
 
 # Bloco da Deixa
@@ -256,28 +268,26 @@ if st.button("🔊 Ouvir Deixa"):
 
 st.markdown("---")
 
-# Bloco da Resposta do Espantalho (Rafael)
-st.markdown("🌾 **Sua fala (Espantalho):**")
-st.markdown(f"> *{cena_atual['fala_espantalho']}*")
+# Bloco de Treino por Voz
+st.markdown("🎙️ **Sua vez (Grave sua fala como Espantalho):**")
 
-modo_teste = st.radio(
-    "Como deseja ensaiar?",
-    ["Praticar com Texto", "Simular Gravação de Voz"],
+with st.expander("👀 Ver texto da fala de referência"):
+    st.markdown(f"> *{cena_atual['fala_espantalho']}*")
+
+audio_gravado = st.audio_input(
+    "Clique no botão de gravação para testar sua fala:"
 )
 
-if modo_teste == "Simular Gravação de Voz":
-    st.warning("🎙️ Ferramenta de microfone pronta para captura.")
-    st.audio_input("Grave sua fala como Espantalho:")
-else:
-    fala_usuario = st.text_input("Digite sua fala para testar:")
-    if st.button("Validar Fala"):
-        if (
-            fala_usuario.strip().lower()
-            == cena_atual["fala_espantalho"].strip().lower()
-        ):
-            st.success("🎉 Perfeito, Rafael! A fala está exata.")
+if audio_gravado:
+    st.success("🎙️ Áudio gravado com sucesso!")
+    st.balloons()
+
+    # Botão para avançar para a próxima fala
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.session_state.indice_atual < len(cenas_espantalho) - 1:
+            if st.button("Próxima Fala ➡️", type="primary"):
+                st.session_state.indice_atual += 1
+                st.rerun()
         else:
-            st.error(
-                "❌ Quase lá! Confira o texto original: "
-                f"_{cena_atual['fala_espantalho']}_"
-            )
+            st.success("🎉 Parabéns! Você concluiu todas as falas do Espantalho!")
