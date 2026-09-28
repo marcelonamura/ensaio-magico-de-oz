@@ -315,8 +315,9 @@ if audio_gravado:
                     " precisa de ajuste."
                 )
 
+                # Chamada correta utilizando o modelo padrão atual da SDK
                 response = client.models.generate_content(
-                    model='', contents=[audio_ref, prompt]
+                    model="gemini-2.5-flash", contents=[audio_ref, prompt]
                 )
 
                 st.success("✨ Análise do Diretor (Gemini):")
