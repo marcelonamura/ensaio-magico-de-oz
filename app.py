@@ -1,3 +1,4 @@
+from google import genai
 import streamlit as st
 
 # Configuração da Página
@@ -222,15 +223,20 @@ cenas_espantalho = [
     },
 ]
 
-# Inicializa o controle de índice da fala no estado da sessão
+# Inicializa o cliente do Gemini usando os Secrets do Streamlit
+# (Você configurará a chave GEMINI_API_KEY nas configurações do app no Streamlit Cloud)
+try:
+    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+except Exception:
+    client = None
+
 if "indice_atual" not in st.session_state:
     st.session_state.indice_atual = 0
 
 # Título do Aplicativo
-st.title("🌾 Ensaio por Voz: O Espantalho")
+st.title("🌾 Ensaio por Voz com Gemini: O Espantalho")
 st.markdown(
-    "Ouça a deixa da cena, veja o texto de referência, grave a sua fala e"
-    " avance!"
+    "Ouça a deixa, grave sua fala e deixe o Gemini avaliar sua interpretação!"
 )
 
 # Sidebar para escolha manual
@@ -268,19 +274,57 @@ if st.button("🔊 Ouvir Deixa"):
 
 st.markdown("---")
 
-# Bloco de Treino por Voz com Texto Aberto (Sem Expander)
-st.markdown("🌾 **Sua fala (Espantalho):**")
+# Bloco de Referência do Espantalho
+st.markdown("🌾 **Texto original da sua fala (Espantalho):**")
 st.info(f"_{cena_atual['fala_espantalho']}_")
 
-# Usar uma chave única (baseada no ID da cena) faz com que o gravador reinicie limpo a cada troca
+# Gravador de voz limpo por cena
 audio_gravado = st.audio_input(
     "Grave sua fala como Espantalho:",
     key=f"gravador_cena_{cena_atual['id']}",
 )
 
 if audio_gravado:
-    st.success("🎙️ Áudio gravado com sucesso!")
-    st.balloons()
+    if client is None:
+        st.error(
+            "⚠️ Chave GEMINI_API_KEY não configurada nos Secrets do Streamlit."
+        )
+    else:
+        with st.spinner(
+            "🤖 O Gemini está a ouvir e a analisar a sua atuação..."
+        ):
+            try:
+                # Salva o áudio temporariamente para enviar ao Gemini
+                audio_bytes = audio_gravado.read()
+                audio_file_path = "temp_audio.wav"
+                with open(audio_file_path, "wb") as f:
+                    f.write(audio_bytes)
+
+                # Faz upload do áudio para a API do Gemini
+                audio_ref = client.files.upload(file=audio_file_path)
+
+                # Prompt avaliador
+                prompt = (
+                    "Você é um diretor de teatro avaliador. A fala esperada do"
+                    f" ator (que interpreta o Espantalho) é: '{cena_atual['fala_espantalho']}'."
+                    " Ouça atentamente o áudio enviado, transcreva o que o ator"
+                    " disse e avalie se ele acertou a fala de forma correta"
+                    " (permitindo pequenas variações naturais de dicção)."
+                    " Responda em Português de Portugal/Brasil de forma curta e"
+                    " encorajadora, indicando se a fala foi correta ou se"
+                    " precisa de ajuste."
+                )
+
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash", contents=[audio_ref, prompt]
+                )
+
+                st.success("✨ Análise do Diretor (Gemini):")
+                st.write(response.text)
+                st.balloons()
+
+            except Exception as e:
+                st.error(f"Erro ao processar o áudio com o Gemini: {e}")
 
     # Botão para avançar para a próxima fala
     if st.session_state.indice_atual < len(cenas_espantalho) - 1:
