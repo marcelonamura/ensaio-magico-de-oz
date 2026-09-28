@@ -1,4 +1,6 @@
+import base64
 from google import genai
+import requests
 import streamlit as st
 
 # Configuração da Página
@@ -229,13 +231,74 @@ try:
 except Exception:
     client = None
 
+
+def gerar_audio_google_tts(texto, personagem):
+    """Gera áudio real utilizando a API REST do Google Cloud Text-to-Speech
+
+    com vozes e tons diferentes com base no personagem.
+    """
+    api_key = st.secrets.get("GEMINI_API_KEY")
+    if not api_key:
+        return None
+
+    url = (
+        "https://texttospeech.googleapis.com/v1/text:synthesize?key=" + api_key
+    )
+
+    # Configura vozes diferentes para dar personalidade aos personagens
+    # Dorothy (Voz feminina jovem/suave) | Homem de Lata (Voz masculina mais firme) | Leão (Voz mais grave)
+    voz_config = {
+        "voice_name": "pt-BR-Neural2-A",  # Padrão feminino (Dorothy)
+        "pitch": 0.0,
+        "speaking_rate": 1.0,
+    }
+
+    personagem_lower = personagem.lower()
+    if (
+        "homem de lata" in personagem_lower
+        or "leão" in personagem_lower
+        or "guarda" in personagem_lower
+    ):
+        voz_config = {
+            "voice_name": "pt-BR-Neural2-B",
+            "pitch": -2.0,
+            "speaking_rate": 0.95,
+        }  # Tom mais grave/masculino
+
+    payload = {
+        "input": {"text": texto},
+        "voice": {
+            "languageCode": "pt-BR",
+            "name": voz_config["voice_name"],
+            "ssmlGender": (
+                "FEMALE" if "Neural2-A" in voz_config["voice_name"] else "MALE"
+            ),
+        },
+        "audioConfig": {
+            "audioEncoding": "MP3",
+            "pitch": voz_config["pitch"],
+            "speakingRate": voz_config["speaking_rate"],
+        },
+    }
+
+    try:
+        response = requests.post(url, json=payload)
+        if response.status_code == 200:
+            audio_content = response.json().get("audioContent")
+            return base64.b64decode(audio_content)
+    except Exception:
+        pass
+    return None
+
+
 if "indice_atual" not in st.session_state:
     st.session_state.indice_atual = 0
 
 # Título do Aplicativo
-st.title("🌾 Ensaio por Voz com Gemini: O Espantalho")
+st.title("🌾 Ensaio Teatral: O Espantalho")
 st.markdown(
-    "Ouça a deixa em voz alta, grave a sua fala e deixe o Gemini avaliar!"
+    "Ouça as deixas com vozes reais dos personagens, grave sua fala e receba"
+    " a avaliação do Gemini!"
 )
 
 # Sidebar para escolha manual
@@ -268,27 +331,19 @@ st.markdown(
     f" *\"{cena_atual['deixa']}\"*"
 )
 
-# Botão de Text-to-Speech nativo do navegador
-texto_para_falar = cena_atual["deixa"].replace('"', '\\"')
-js_code = f"""
-<script>
-function falarDeixa() {{
-    if ('speechSynthesis' in window) {{
-        let utterance = new SpeechSynthesisUtterance("{texto_para_falar}");
-        utterance.lang = 'pt-BR';
-        utterance.rate = 1.0;
-        window.speechSynthesis.speak(utterance);
-    }} else {{
-        alert('O seu navegador não suporta leitura de voz.');
-    }}
-}}
-falarDeixa();
-</script>
-"""
-
-if st.button("🔊 Ouvir Deixa em Voz Alta"):
-    st.components.v1.html(js_code, height=0)
-    st.info(f'Reproduzindo deixa de {cena_atual["personagem_deixa"]}...')
+# Botão para reproduzir o áudio real gerado pelo Google Cloud TTS
+if st.button("🔊 Ouvir Deixa em Voz Real"):
+    with st.spinner("Gerando voz natural do personagem..."):
+        audio_bytes = gerar_audio_google_tts(
+            cena_atual["deixa"], cena_atual["personagem_deixa"]
+        )
+        if audio_bytes:
+            st.audio(audio_bytes, format="audio/mp3", autoplay=True)
+        else:
+            st.warning(
+                "Não foi possível gerar o áudio Cloud TTS. Verifique a chave de"
+                " API."
+            )
 
 st.markdown("---")
 
@@ -312,10 +367,10 @@ if audio_gravado:
             "🤖 O Gemini está a ouvir e a analisar a sua atuação..."
         ):
             try:
-                audio_bytes = audio_gravado.read()
+                audio_bytes_user = audio_gravado.read()
                 audio_file_path = "temp_audio.wav"
                 with open(audio_file_path, "wb") as f:
-                    f.write(audio_bytes)
+                    f.write(audio_bytes_user)
 
                 audio_ref = client.files.upload(file=audio_file_path)
 
@@ -346,4 +401,4 @@ if audio_gravado:
             st.session_state.indice_atual += 1
             st.rerun()
     else:
-        st.success("🎉 Parabéns! Você concluiu todas as falas do Espantalho!")
+        st.success("🎉 Parabéns! Você concluiu todas las falas do Espantalho!")
